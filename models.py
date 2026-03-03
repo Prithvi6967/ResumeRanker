@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Resume(models.Model):
+    candidate_id = models.CharField(max_length=50, unique=True, blank=True, default='')
     # Personal Details
     name = models.CharField(max_length=200, blank=True, default='')
     email = models.EmailField(blank=True, default='')
@@ -28,10 +29,6 @@ class Resume(models.Model):
     # Projects (JSON field - stores array of projects)
     # Format: [{"title": "Project 1", "description": "...", "technologies": "..."}, ...]
     projects = models.JSONField(default=list, blank=True)
-
-
-    candidate_id = models.CharField(max_length=50, unique=True, blank=True, default='')
-
 
     previous_companies = models.JSONField(default=list, blank=True)
 
