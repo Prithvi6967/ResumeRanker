@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Ranking System</title>
+    <title>AI Resume Ranker</title>
     <style>
+        /* [Your existing styles stay exactly the same] */
         * {
             margin: 0;
             padding: 0;
@@ -31,31 +32,160 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .search-section {
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
             background: white;
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
         }
 
-        .search-input-group {
-            display: flex;
-            gap: 10px;
+        .tab-content.active {
+            display: block;
         }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
+        .upload-section h2,
+        .search-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #667eea;
             border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            margin: 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 15px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             outline: none;
             transition: border 0.3s;
         }
 
-        input[type="text"]:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             border-color: #667eea;
+        }
+
+        .skills-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .skill-chip {
+            padding: 8px 15px;
+            background: #e8ebff;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            font-size: 14px;
+        }
+
+        .skill-chip:hover {
+            background: #d0d5ff;
+        }
+
+        .skill-chip.selected {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .custom-skill-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .custom-skill-input input {
+            flex: 1;
+        }
+
+        .custom-skill-input button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         button {
@@ -89,6 +219,19 @@
             color: white;
             margin-bottom: 20px;
             font-size: 1.8em;
+        }
+
+        .filter-summary {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .filter-summary strong {
+            display: block;
+            margin-bottom: 5px;
         }
 
         .result-card {
@@ -226,153 +369,213 @@
             font-weight: 500;
         }
 
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
+        .error-message, .success-message {
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
             display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
             border-left: 4px solid #dc3545;
         }
 
         .success-message {
             background: #d4edda;
             color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
             border-left: 4px solid #28a745;
+        }
+
+        .stats-info {
+            background: #e8ebff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .helper-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Resume Ranker</h1>
+        <h1>🎯 AI Resume Ranker</h1>
 
-        <div class="search-section">
-            <h2 style="margin-bottom: 20px;">Search by Job Role</h2>
-            <div class="success-message" id="successMessage"></div>
-            <div class="error-message" id="errorMessage"></div>
-            <div class="search-input-group">
-                <input type="text" id="jobRole" placeholder="Enter job role (Java Developer, Data Scientist)" onkeypress="handleKeyPress(event)">
-                <button onclick="rankResumes()" id="rankButton">Rank Resumes</button>
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('upload')">📤 Upload Resumes</button>
+            <button class="tab-button" onclick="switchTab('search')">🔍 Search & Rank</button>
+        </div>
+
+        <div id="uploadTab" class="tab-content active">
+            <div class="upload-section">
+                <h2>Upload Resume</h2>
+                <div class="success-message" id="uploadSuccessMessage"></div>
+                <div class="error-message" id="uploadErrorMessage"></div>
+
+                <div class="file-upload-area" id="uploadArea" onclick="document.getElementById('resumeFile').click()">
+                    <p style="font-size: 48px; margin-bottom: 10px;">📄</p>
+                    <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Click to upload or drag and drop</p>
+                    <p class="file-info">Supported formats: PDF, DOCX, TXT</p>
+                    <p class="file-info" id="selectedFileName"></p>
+                </div>
+                <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" multiple onchange="handleFileSelect(event)">
+                <button onclick="uploadResume()" id="uploadButton" disabled>Upload Resumes</button>
+
+                <div id="uploadProgress" style="display: none; margin-top: 20px;">
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 30px; overflow: hidden;">
+                        <div id="progressBar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;"></div>
+                    </div>
+                    <p id="progressText" style="text-align: center; margin-top: 10px; color: #667eea; font-weight: 500;"></p>
+                </div>
             </div>
         </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p class="loading-text">This may take a moment...Please wait</p>
+        <div id="searchTab" class="tab-content">
+            <div class="search-section">
+                <h2>Smart Resume Search & Ranking</h2>
+                <form class="filter-form" onsubmit="event.preventDefault(); rankResumes();">
+                    <div class="form-group full-width">
+                        <label for="jobRole">Job Role / Position *</label>
+                        <input type="text" id="jobRole" placeholder="e.g., Senior Backend Developer" required>
+                    </div>
+                    <div class="form-group"><label for="location">Location</label><input type="text" id="location"></div>
+                    <div class="form-group"><label for="domain">Domain</label><input type="text" id="domain"></div>
+                    <div class="form-group"><label for="minExperience">Min Experience</label><input type="number" id="minExperience"></div>
+                    <div class="form-group">
+                        <label for="companyType">Company Type</label>
+                        <select id="companyType"><option value="">Any</option><option value="product">Product</option></select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Skills</label>
+                        <div class="skills-selector" id="skillsSelector">
+                            <span class="skill-chip" onclick="toggleSkill(this, 'Python')">Python</span>
+                            <span class="skill-chip" onclick="toggleSkill(this, 'Django')">Django</span>
+                        </div>
+                    </div>
+                    <div class="form-group full-width"><button type="submit" id="rankButton">🚀 Find & Rank Candidates</button></div>
+                </form>
+            </div>
+            <div class="loading" id="rankLoading"><div class="spinner"></div></div>
+            <div class="results-section" id="resultsSection"></div>
         </div>
-
-        <div class="results-section" id="resultsSection"></div>
     </div>
 
     <script>
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                rankResumes();
+        let selectedFiles = [];
+        let selectedSkills = [];
+
+        function switchTab(tab) {
+            const uploadTab = document.getElementById('uploadTab');
+            const searchTab = document.getElementById('searchTab');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            if (tab === 'upload') {
+                uploadTab.classList.add('active'); searchTab.classList.remove('active'); tabButtons[0].classList.add('active');
+            } else {
+                uploadTab.classList.remove('active'); searchTab.classList.add('active'); tabButtons[1].classList.add('active');
             }
         }
 
-        async function rankResumes() {
-            const jobRole = document.getElementById('jobRole').value.trim();
-            const rankButton = document.getElementById('rankButton');
+        function toggleSkill(element, skill) {
+            element.classList.toggle('selected');
+            const index = selectedSkills.indexOf(skill);
+            if (index > -1) selectedSkills.splice(index, 1); else selectedSkills.push(skill);
+        }
 
-            if (!jobRole) {
-                showMessage('error', 'Please enter a job role');
-                return;
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length > 0) {
+                selectedFiles = files;
+                document.getElementById('selectedFileName').textContent = `Selected ${files.length} file(s)`;
+                document.getElementById('uploadButton').disabled = false;
             }
+        }
 
+        // UPDATED FETCH URL
+        async function uploadResume() {
+            if (selectedFiles.length === 0) return;
+            const uploadButton = document.getElementById('uploadButton');
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            uploadButton.disabled = true;
+            progressDiv.style.display = 'block';
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                try {
+                    const formData = new FormData();
+                    formData.append('resume_file', file);
+
+                    // CHANGED FROM '/resumes/upload/' TO '/upload/'
+                    const response = await fetch('/upload/', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    const progress = Math.round(((i + 1) / selectedFiles.length) * 100);
+                    progressBar.style.width = progress + '%';
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+            alert('Processing finished. Check terminal for details.');
+            location.reload();
+        }
+
+        // UPDATED FETCH URL
+        async function rankResumes() {
+            const jobRole = document.getElementById('jobRole').value;
+            const rankButton = document.getElementById('rankButton');
             rankButton.disabled = true;
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
-            hideMessages();
+            document.getElementById('rankLoading').style.display = 'block';
 
             try {
-                const response = await fetch('/resumes/rank/', {
+                // CHANGED FROM '/resumes/rank/' TO '/rank/'
+                const response = await fetch('/rank/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ job_role: jobRole })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        job_role: jobRole,
+                        location: document.getElementById('location').value,
+                        domain: document.getElementById('domain').value,
+                        min_experience: parseInt(document.getElementById('minExperience').value) || 0,
+                        required_skills: selectedSkills,
+                    })
                 });
 
                 const data = await response.json();
-
-                if (data.success) {
-                    displayResults(data.ranked_resumes, data.job_role);
-                    showMessage('success', `✅ Successfully ranked ${data.ranked_resumes.length} resumes for "${data.job_role}"`);
-                } else {
-                    showMessage('error', '❌ ' + data.message);
-                }
+                if (data.success) displayResults(data.ranked_resumes, jobRole);
             } catch (error) {
-                showMessage('error', '❌ Error ranking resumes. Please check your API key and try again.');
                 console.error('Error:', error);
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('rankLoading').style.display = 'none';
                 rankButton.disabled = false;
             }
         }
 
         function displayResults(rankedResumes, jobRole) {
             const resultsSection = document.getElementById('resultsSection');
-            resultsSection.innerHTML = `<h2 class="results-header">Ranked Results for "${jobRole}"</h2>`;
-
+            resultsSection.innerHTML = `<h2>Results for ${jobRole}</h2>`;
             rankedResumes.forEach((resume, index) => {
-                const card = document.createElement('div');
-                card.className = 'result-card';
-
-                const skillsHtml = resume.skills.map(skill =>
-                    `<span class="skill-tag">${skill}</span>`
-                ).join('');
-
-                const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-
-                card.innerHTML = `
-                    <div class="rank-badge">${rankEmoji || (index + 1)}</div>
-                    <div class="result-content">
-                        <div class="result-name">${resume.name}</div>
-                        <div class="result-details">
-                            <p><strong>Years of Experience:</strong> ${resume.years_of_experience} years</p>
-                            <p class="match-score">Match Score: ${resume.match_score}/100</p>
-                            <div class="match-score-bar">
-                                <div class="match-score-fill" style="width: ${resume.match_score}%"></div>
-                            </div>
+                resultsSection.innerHTML += `
+                    <div class="result-card">
+                        <div class="rank-badge">${index + 1}</div>
+                        <div class="result-content">
+                            <div class="result-name">${resume.name}</div>
+                            <p>Score: ${resume.match_score}</p>
+                            <div class="ranking-reason">${resume.ranking_reason}</div>
                         </div>
-                        <div class="skills-container">
-                            <strong>Key Skills:</strong><br>
-                            ${skillsHtml}
-                        </div>
-                        <div class="ranking-reason">
-                            <strong>Reason for this ranking:</strong><br>
-                            ${resume.ranking_reason}
-                        </div>
-                    </div>
-                `;
-
-                resultsSection.appendChild(card);
+                    </div>`;
             });
-
             resultsSection.style.display = 'block';
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function showMessage(type, message) {
-            hideMessages();
-            const messageElement = document.getElementById(type === 'error' ? 'errorMessage' : 'successMessage');
-            messageElement.textContent = message;
-            messageElement.style.display = 'block';
-
-            setTimeout(() => {
-                messageElement.style.display = 'none';
-            }, 5000);
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
         }
     </script>
 </body>
